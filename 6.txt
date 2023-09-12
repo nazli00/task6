@@ -1,0 +1,195 @@
+using System;
+using System.Collections.Generic;
+
+class Card
+{
+    public string PAN { get; set; }
+    public string PIN { get; set; }
+    public string CVC { get; set; }
+    public string ExpireDate { get; set; }
+    public decimal Balance { get; set; }
+}
+
+class User
+{
+    public string Name { get; set; }
+    public string Surname { get; set; }
+    public Card CreditCard { get; set; }
+    public List<string> PerformedOperations { get; set; }
+
+    public User()
+    {
+        PerformedOperations = new List<string>();
+    }
+
+    public void TransferFunds(User targetUser, decimal amount)
+    {
+        if (this.CreditCard.Balance >= amount)
+        {
+            this.CreditCard.Balance -= amount;
+            targetUser.CreditCard.Balance += amount;
+            Console.WriteLine($"Successfully transferred {amount} AZN to {targetUser.Name} {targetUser.Surname}'s card.");
+            this.PerformedOperations.Add($"Transferred {amount} AZN to {targetUser.Name} {targetUser.Surname}");
+        }
+        else
+        {
+            Console.WriteLine("There is not enough money in your balance for this transfer.");
+        }
+    }
+}
+
+class Program
+{
+    static List<User> users = new List<User>();
+
+    static void Main(string[] args)
+    {
+        CreateUsers("John", "Doe", "1234567890123456", "1234", "123", "06/23", 1000);
+        CreateUsers("Alice", "Smith", "9876543210987654", "5678", "456", "09/24", 1500);
+
+        Console.Write("Enter your PIN: ");
+        string enteredPIN = Console.ReadLine();
+        User user = FindUserByPIN(enteredPIN);
+
+        if (user != null)
+        {
+            Console.WriteLine($"{user.Name} {user.Surname} is yours. Please choose an option:");
+
+            while (true)
+            {
+                Console.WriteLine("1. Balance");
+                Console.WriteLine("2. Cash");
+                Console.WriteLine("3. List of performed operations");
+                Console.WriteLine("4. Moving from card to card");
+
+                string choice = Console.ReadLine();
+
+                if (choice == "1")
+                {
+                    Console.WriteLine($"Balance: {user.CreditCard.Balance} AZN");
+                }
+                else if (choice == "2")
+                {
+                    WithdrawCash(user);
+                }
+                else if (choice == "3")
+                {
+                    ListPerformedOperations(user);
+                }
+                else if (choice == "4")
+                {
+                    TransferFunds(user);
+                }
+                else
+                {
+                    Console.WriteLine("Invalid choice. Please select a valid option.");
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine("The card for this PIN code was not found.");
+        }
+    }
+
+    static void CreateUsers(string name,string surname,string PAN,string PIN,
+        string CVC,string ExpireDate,int Balance)
+    {
+        users.Add(new User
+        {
+            Name = name,
+            Surname = surname,
+            CreditCard = new Card
+            {
+                PAN = PAN,
+                PIN = PIN,
+                CVC = CVC,
+                ExpireDate = ExpireDate,
+                Balance = Balance
+            }
+        });
+    }
+
+    static User FindUserByPIN(string pin)
+    {
+        return users.Find(u => u.CreditCard.PIN == pin);
+    }
+
+    static void WithdrawCash(User user)
+    {
+        Console.WriteLine("Select an amount to withdraw:");
+        Console.WriteLine("1. 10 AZN");
+        Console.WriteLine("2. 20 AZN");
+        Console.WriteLine("3. 50 AZN");
+        Console.WriteLine("4. 100 AZN");
+        Console.WriteLine("5. Other");
+
+        string choice = Console.ReadLine();
+        decimal amountToWithdraw = 0;
+
+        if (choice == "1")
+        {
+            amountToWithdraw = 10.0m;
+        }
+        else if (choice == "2")
+        {
+            amountToWithdraw = 20.0m;
+        }
+        else if (choice == "3")
+        {
+            amountToWithdraw = 50.0m;
+        }
+        else if (choice == "4")
+        {
+            amountToWithdraw = 100.0m;
+        }
+        else if (choice == "5")
+        {
+            Console.Write("Enter the amount to withdraw: ");
+            amountToWithdraw = decimal.Parse(Console.ReadLine());
+        }
+        else
+        {
+            Console.WriteLine("Invalid choice. Please select a valid option.");
+            return;
+        }
+
+        if (amountToWithdraw > user.CreditCard.Balance)
+        {
+            Console.WriteLine("There is not enough money in the balance.");
+        }
+        else
+        {
+            user.CreditCard.Balance -= amountToWithdraw;
+            Console.WriteLine($"Successfully withdrawn {amountToWithdraw} AZN.");
+            user.PerformedOperations.Add($"Withdrawn {amountToWithdraw} AZN");
+        }
+    }
+
+    static void ListPerformedOperations(User user)
+    {
+        Console.WriteLine("List of performed operations:");
+        foreach (var operation in user.PerformedOperations)
+        {
+            Console.WriteLine(operation);
+        }
+    }
+
+    static void TransferFunds(User user)
+    {
+        Console.Write("Enter the recipient's PIN: ");
+        string recipientPIN = Console.ReadLine();
+        User recipient = FindUserByPIN(recipientPIN);
+
+        if (recipient != null)
+        {
+            Console.Write("Enter the amount to transfer: ");
+            decimal transferAmount = decimal.Parse(Console.ReadLine());
+            user.TransferFunds(recipient, transferAmount);
+        }
+        else
+        {
+            Console.WriteLine("Recipient not found.");
+        }
+    }
+}
